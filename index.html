@@ -197,10 +197,7 @@ async function initMsal() {
 
 async function signIn() {
   try {
-    const result = await msalInstance.loginPopup({ scopes: SCOPES });
-    msalInstance.setActiveAccount(result.account);
-    showApp(result.account);
-    await loadData();
+    await msalInstance.loginRedirect({ scopes: SCOPES });
   } catch(e) {
     alert('Anmeldung fehlgeschlagen: ' + e.message);
   }
@@ -414,8 +411,19 @@ document.getElementById('filter-person').addEventListener('change', applyFilters
 document.getElementById('refreshBtn').addEventListener('click', loadData);
 
 // Start
-initMsal().then(() => {
+initMsal().then(async () => {
   document.getElementById('loginBtn').addEventListener('click', signIn);
+
+  // Handle redirect response after login
+  const response = await msalInstance.handleRedirectPromise();
+  if (response && response.account) {
+    msalInstance.setActiveAccount(response.account);
+    showApp(response.account);
+    await loadData();
+    return;
+  }
+
+  // Already logged in from previous session
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length > 0) {
     msalInstance.setActiveAccount(accounts[0]);
