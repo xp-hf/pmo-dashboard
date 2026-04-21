@@ -4,311 +4,108 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PMO Dashboard</title>
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #f5f4f0;
-    --surface: #ffffff;
-    --surface2: #f0efe9;
-    --border: rgba(0,0,0,0.08);
-    --border2: rgba(0,0,0,0.15);
-    --text: #1a1a18;
-    --text2: #6b6b66;
-    --text3: #9b9b94;
-    --accent: #1a4d8f;
-    --accent-light: #e6eef8;
-    --green: #3b7a20;
-    --green-light: #eaf3de;
-    --amber: #8a5200;
-    --amber-light: #fef3da;
-    --red: #b02020;
-    --red-light: #fceaea;
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
-
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 14px;
-  }
-
-  /* Login Screen */
-  #login-screen {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-  }
-
-  .login-card {
-    background: var(--surface);
-    border: 0.5px solid var(--border2);
-    border-radius: 16px;
-    padding: 2.5rem 3rem;
-    text-align: center;
-    max-width: 360px;
-    width: 90%;
-  }
-
-  .login-logo {
-    width: 48px;
-    height: 48px;
-    background: var(--accent);
-    border-radius: 12px;
-    margin: 0 auto 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .login-logo svg { width: 26px; height: 26px; fill: white; }
-
-  .login-card h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
-  .login-card p { font-size: 13px; color: var(--text2); margin-bottom: 1.75rem; line-height: 1.5; }
-
-  .btn-login {
-    display: inline-flex; align-items: center; gap: 10px;
-    background: var(--accent); color: white;
-    border: none; border-radius: var(--radius-sm);
-    padding: 10px 22px; font-size: 14px; font-weight: 500;
-    cursor: pointer; width: 100%; justify-content: center;
-    transition: opacity 0.15s;
-  }
-  .btn-login:hover { opacity: 0.88; }
-  .btn-login svg { width: 18px; height: 18px; fill: white; }
-
-  /* App Shell */
-  #app { display: none; min-height: 100vh; }
-
-  header {
-    background: var(--surface);
-    border-bottom: 0.5px solid var(--border2);
-    padding: 0 1.5rem;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky; top: 0; z-index: 10;
-  }
-
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .header-logo { width: 30px; height: 30px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
-  .header-logo svg { width: 16px; height: 16px; fill: white; }
-  header h1 { font-size: 15px; font-weight: 600; color: var(--text); }
-  .header-right { display: flex; align-items: center; gap: 10px; }
-
-  .status-badge {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px; color: var(--text2);
-    background: var(--surface2);
-    padding: 4px 10px; border-radius: 20px;
-  }
-  .dot { width: 7px; height: 7px; border-radius: 50%; }
-  .dot-ok { background: var(--green); }
-  .dot-loading { background: var(--amber); }
-  .dot-err { background: var(--red); }
-
-  .btn-refresh {
-    background: var(--surface2); border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm); padding: 5px 12px;
-    font-size: 12px; color: var(--text2); cursor: pointer;
-  }
-  .btn-refresh:hover { background: var(--border); }
-
-  .user-chip {
-    display: flex; align-items: center; gap: 7px;
-    font-size: 12px; color: var(--text2);
-  }
-  .user-avatar {
-    width: 26px; height: 26px; border-radius: 50%;
-    background: var(--accent-light); color: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600;
-  }
-
-  /* Filters */
-  .filter-bar {
-    background: var(--surface);
-    border-bottom: 0.5px solid var(--border);
-    padding: 0.6rem 1.5rem;
-    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  }
-  .filter-bar label { font-size: 12px; color: var(--text3); }
-  .filter-bar select {
-    font-size: 12px; padding: 5px 10px;
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm);
-    background: var(--surface); color: var(--text);
-    cursor: pointer;
-  }
-
-  /* Metrics */
-  .metrics {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 10px;
-    padding: 1.25rem 1.5rem;
-  }
-  .metric {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem 1.1rem;
-  }
-  .metric .m-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .metric .m-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
-  .metric .m-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
-  .metric.danger .m-value { color: var(--red); }
-
-  /* Tabs */
-  .tabs {
-    display: flex; border-bottom: 0.5px solid var(--border2);
-    padding: 0 1.5rem; background: var(--surface);
-    margin-top: 0.25rem;
-  }
-  .tab {
-    font-size: 13px; padding: 9px 16px; cursor: pointer;
-    color: var(--text2); border-bottom: 2px solid transparent;
-    margin-bottom: -0.5px; font-weight: 400;
-    transition: color 0.15s;
-  }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
-  .tab:hover:not(.active) { color: var(--text); }
-
-  .tab-content { display: none; padding: 1.25rem 1.5rem; }
-  .tab-content.active { display: block; }
-
-  /* Plan cards */
-  .plan-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    gap: 10px;
-  }
-  .plan-card {
-    background: var(--surface);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 1rem 1.1rem;
-  }
-  .plan-card-name {
-    font-size: 13px; font-weight: 500; color: var(--text);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    margin-bottom: 8px;
-  }
-  .rag-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); margin-bottom: 10px; }
-  .rag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .rag-green { background: var(--green); }
-  .rag-amber { background: #e07b00; }
-  .rag-red { background: var(--red); }
-  .prog-bg { background: var(--surface2); border-radius: 3px; height: 5px; overflow: hidden; }
-  .prog-fill { height: 5px; border-radius: 3px; transition: width 0.4s ease; }
-  .prog-green { background: var(--green); }
-  .prog-amber { background: #e07b00; }
-  .prog-red { background: var(--red); }
-  .plan-meta { display: flex; justify-content: space-between; margin-top: 7px; font-size: 11px; color: var(--text3); }
-
-  /* Tasks table */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th {
-    text-align: left; font-size: 11px; font-weight: 500;
-    color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em;
-    padding: 7px 10px; border-bottom: 0.5px solid var(--border2);
-    background: var(--surface);
-  }
-  td {
-    padding: 9px 10px; border-bottom: 0.5px solid var(--border);
-    color: var(--text); vertical-align: middle;
-    max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--surface2); }
-
-  .badge {
-    display: inline-block; font-size: 11px; font-weight: 500;
-    padding: 3px 9px; border-radius: 20px;
-  }
-  .badge-todo { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border2); }
-  .badge-progress { background: var(--accent-light); color: var(--accent); }
-  .badge-done { background: var(--green-light); color: var(--green); }
-  .badge-late { background: var(--red-light); color: var(--red); }
-
-  /* People */
-  .person-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 0; border-bottom: 0.5px solid var(--border);
-  }
-  .person-row:last-child { border-bottom: none; }
-  .p-avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--accent-light); color: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600; flex-shrink: 0;
-  }
-  .p-name { font-size: 13px; font-weight: 500; color: var(--text); }
-  .p-sub { font-size: 11px; color: var(--text3); }
-  .p-bar-bg { flex: 1; background: var(--surface2); border-radius: 3px; height: 6px; overflow: hidden; margin: 0 12px; }
-  .p-bar-fill { height: 6px; border-radius: 3px; }
-  .p-count { font-size: 13px; font-weight: 500; color: var(--text2); min-width: 24px; text-align: right; }
-
-  /* States */
-  .empty-state {
-    text-align: center; padding: 3rem 1rem;
-    font-size: 13px; color: var(--text3);
-  }
-  .error-box {
-    background: var(--red-light); border: 0.5px solid rgba(176,32,32,0.2);
-    border-radius: var(--radius); padding: 1rem 1.25rem;
-    font-size: 13px; color: var(--red); line-height: 1.6;
-    margin: 1.25rem 1.5rem;
-  }
-  .loading-state {
-    display: flex; align-items: center; justify-content: center;
-    gap: 10px; padding: 3rem; color: var(--text3); font-size: 13px;
-  }
-  .spinner {
-    width: 18px; height: 18px; border: 2px solid var(--border2);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .section-title {
-    font-size: 11px; font-weight: 500; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.06em;
-    margin-bottom: 0.75rem;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f4f0; --surface: #ffffff; --surface2: #f0efe9;
+  --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.15);
+  --text: #1a1a18; --text2: #6b6b66; --text3: #9b9b94;
+  --accent: #1a4d8f; --accent-light: #e6eef8;
+  --green: #3b7a20; --green-light: #eaf3de;
+  --amber: #8a5200; --amber-light: #fef3da;
+  --red: #b02020; --red-light: #fceaea;
+  --radius: 10px; --radius-sm: 6px;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+#login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.login-card { background: var(--surface); border: 0.5px solid var(--border2); border-radius: 16px; padding: 2.5rem 3rem; text-align: center; max-width: 360px; width: 90%; }
+.login-logo { width: 48px; height: 48px; background: var(--accent); border-radius: 12px; margin: 0 auto 1.25rem; display: flex; align-items: center; justify-content: center; }
+.login-card h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.login-card p { font-size: 13px; color: var(--text2); margin-bottom: 1.75rem; line-height: 1.5; }
+.btn-login { display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 10px 22px; font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; }
+.btn-login:hover { opacity: 0.88; }
+#app { display: none; min-height: 100vh; }
+header { background: var(--surface); border-bottom: 0.5px solid var(--border2); padding: 0 1.5rem; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { width: 30px; height: 30px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+header h1 { font-size: 15px; font-weight: 600; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.status-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); background: var(--surface2); padding: 4px 10px; border-radius: 20px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; }
+.dot-ok { background: var(--green); } .dot-loading { background: #e07b00; } .dot-err { background: var(--red); }
+.btn-refresh { background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 5px 12px; font-size: 12px; color: var(--text2); cursor: pointer; }
+.user-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+.filter-bar { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 0.6rem 1.5rem; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter-bar label { font-size: 12px; color: var(--text3); }
+.filter-bar select { font-size: 12px; padding: 5px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; padding: 1.25rem 1.5rem; }
+.metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+.metric .m-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+.metric .m-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
+.metric .m-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.metric.danger .m-value { color: var(--red); }
+.tabs { display: flex; border-bottom: 0.5px solid var(--border2); padding: 0 1.5rem; background: var(--surface); }
+.tab { font-size: 13px; padding: 9px 16px; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+.tab-content { display: none; padding: 1.25rem 1.5rem; }
+.tab-content.active { display: block; }
+.plan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.plan-card { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 1rem 1.1rem; }
+.plan-card-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
+.rag-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+.rag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rag-green { background: var(--green); } .rag-amber { background: #e07b00; } .rag-red { background: var(--red); }
+.prog-bg { background: var(--surface2); border-radius: 3px; height: 5px; overflow: hidden; }
+.prog-fill { height: 5px; border-radius: 3px; }
+.prog-green { background: var(--green); } .prog-amber { background: #e07b00; } .prog-red { background: var(--red); }
+.plan-meta { display: flex; justify-content: space-between; margin-top: 7px; font-size: 11px; color: var(--text3); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; padding: 7px 10px; border-bottom: 0.5px solid var(--border2); }
+td { padding: 9px 10px; border-bottom: 0.5px solid var(--border); color: var(--text); vertical-align: middle; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; }
+.badge-todo { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border2); }
+.badge-progress { background: var(--accent-light); color: var(--accent); }
+.badge-done { background: var(--green-light); color: var(--green); }
+.badge-late { background: var(--red-light); color: var(--red); }
+.person-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+.person-row:last-child { border-bottom: none; }
+.p-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.p-name { font-size: 13px; font-weight: 500; } .p-sub { font-size: 11px; color: var(--text3); }
+.p-bar-bg { flex: 1; background: var(--surface2); border-radius: 3px; height: 6px; overflow: hidden; margin: 0 12px; }
+.p-bar-fill { height: 6px; border-radius: 3px; }
+.p-count { font-size: 13px; font-weight: 500; color: var(--text2); min-width: 24px; text-align: right; }
+.empty-state { text-align: center; padding: 3rem 1rem; font-size: 13px; color: var(--text3); }
+.error-box { background: var(--red-light); border: 0.5px solid rgba(176,32,32,0.2); border-radius: var(--radius); padding: 1rem 1.25rem; font-size: 13px; color: var(--red); line-height: 1.6; margin: 1.25rem 0; }
+.loading-state { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 3rem; color: var(--text3); font-size: 13px; }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.section-title { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
 </style>
 </head>
 <body>
 
-<!-- Login -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">
-      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2zm4 0h2v2h-2z"/></svg>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2zm4 0h2v2h-2z"/></svg>
     </div>
     <h1>PMO Dashboard</h1>
     <p>Melde dich mit deinem Microsoft 365 Account an, um alle Planner-Pläne im Überblick zu sehen.</p>
-    <button class="btn-login" onclick="signIn()">
-      <svg viewBox="0 0 24 24"><path d="M11 11V1H1v10h10zm2 0h10V1H13v10zM11 13H1v10h10V13zm2 0v10h10V13H13z"/></svg>
+    <button class="btn-login" id="loginBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M11 11V1H1v10h10zm2 0h10V1H13v10zM11 13H1v10h10V13zm2 0v10h10V13H13z"/></svg>
       Mit Microsoft anmelden
     </button>
   </div>
 </div>
 
-<!-- App -->
 <div id="app">
   <header>
     <div class="header-left">
       <div class="header-logo">
-        <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2zm4 0h2v2h-2z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 2h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2zm4 0h2v2h-2z"/></svg>
       </div>
       <h1>PMO Dashboard</h1>
     </div>
@@ -317,8 +114,8 @@
         <span class="dot dot-loading" id="status-dot"></span>
         <span id="status-text">Verbinde...</span>
       </div>
-      <button class="btn-refresh" onclick="loadData()">&#8635; Aktualisieren</button>
-      <div class="user-chip">
+      <button class="btn-refresh" id="refreshBtn">&#8635; Aktualisieren</button>
+      <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);">
         <div class="user-avatar" id="user-avatar">–</div>
         <span id="user-name"></span>
       </div>
@@ -327,11 +124,9 @@
 
   <div class="filter-bar">
     <label>Plan:</label>
-    <select id="filter-plan" onchange="applyFilters()">
-      <option value="all">Alle Pläne</option>
-    </select>
+    <select id="filter-plan"><option value="all">Alle Pläne</option></select>
     <label style="margin-left:6px;">Status:</label>
-    <select id="filter-status" onchange="applyFilters()">
+    <select id="filter-status">
       <option value="all">Alle</option>
       <option value="todo">Nicht begonnen</option>
       <option value="progress">In Bearbeitung</option>
@@ -339,9 +134,7 @@
       <option value="late">Überfällig</option>
     </select>
     <label style="margin-left:6px;">Person:</label>
-    <select id="filter-person" onchange="applyFilters()">
-      <option value="all">Alle</option>
-    </select>
+    <select id="filter-person"><option value="all">Alle</option></select>
   </div>
 
   <div class="metrics">
@@ -353,69 +146,59 @@
   </div>
 
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('plans')">Planübersicht</div>
-    <div class="tab" onclick="switchTab('tasks')">Aufgaben</div>
-    <div class="tab" onclick="switchTab('people')">Auslastung</div>
+    <div class="tab active" data-tab="plans">Planübersicht</div>
+    <div class="tab" data-tab="tasks">Aufgaben</div>
+    <div class="tab" data-tab="people">Auslastung</div>
   </div>
 
   <div id="tab-plans" class="tab-content active">
     <div class="section-title">Status je Plan</div>
-    <div class="plan-grid" id="plan-grid">
-      <div class="loading-state"><div class="spinner"></div> Daten werden geladen...</div>
-    </div>
+    <div class="plan-grid" id="plan-grid"><div class="loading-state"><div class="spinner"></div> Daten werden geladen...</div></div>
   </div>
-
   <div id="tab-tasks" class="tab-content">
     <div class="table-wrap">
       <table>
-        <colgroup>
-          <col style="width:32%"><col style="width:22%"><col style="width:18%"><col style="width:13%"><col style="width:15%">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Aufgabe</th><th>Plan</th><th>Zugewiesen an</th><th>Fällig</th><th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="tasks-body">
-          <tr><td colspan="5"><div class="loading-state"><div class="spinner"></div> Daten werden geladen...</div></td></tr>
-        </tbody>
+        <thead><tr><th>Aufgabe</th><th>Plan</th><th>Zugewiesen an</th><th>Fällig</th><th>Status</th></tr></thead>
+        <tbody id="tasks-body"><tr><td colspan="5"><div class="loading-state"><div class="spinner"></div></div></td></tr></tbody>
       </table>
     </div>
   </div>
-
   <div id="tab-people" class="tab-content">
     <div class="section-title">Offene Aufgaben je Person</div>
-    <div id="people-list">
-      <div class="loading-state"><div class="spinner"></div> Daten werden geladen...</div>
-    </div>
+    <div id="people-list"><div class="loading-state"><div class="spinner"></div></div></div>
   </div>
 </div>
 
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <script>
 const CLIENT_ID = 'a0bf72af-91ba-470e-b99e-4d15b64e614a';
 const TENANT_ID = 'dab3c2cf-190c-452a-94d1-81d093722a25';
 const GRAPH = 'https://graph.microsoft.com/v1.0';
 const SCOPES = ['Tasks.Read', 'Tasks.ReadWrite', 'Group.Read.All', 'User.ReadBasic.All'];
 
-const msalConfig = {
-  auth: {
-    clientId: CLIENT_ID,
-    authority: `https://login.microsoftonline.com/${TENANT_ID}`,
-    redirectUri: window.location.href.split('?')[0]
-  },
-  cache: { cacheLocation: 'sessionStorage' }
-};
-
-const msalApp = new msal.PublicClientApplication(msalConfig);
+let msalInstance = null;
 let token = null;
 let allTasks = [];
 let allPlans = [];
 let userCache = {};
 
+async function initMsal() {
+  const config = {
+    auth: {
+      clientId: CLIENT_ID,
+      authority: 'https://login.microsoftonline.com/' + TENANT_ID,
+      redirectUri: window.location.origin + window.location.pathname
+    },
+    cache: { cacheLocation: 'sessionStorage' }
+  };
+  msalInstance = new msal.PublicClientApplication(config);
+  await msalInstance.initialize();
+}
+
 async function signIn() {
   try {
-    const result = await msalApp.loginPopup({ scopes: SCOPES });
-    msalApp.setActiveAccount(result.account);
+    const result = await msalInstance.loginPopup({ scopes: SCOPES });
+    msalInstance.setActiveAccount(result.account);
     showApp(result.account);
     await loadData();
   } catch(e) {
@@ -426,17 +209,22 @@ async function signIn() {
 function showApp(account) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  const name = account.name || account.username;
+  const name = account.name || account.username || '';
   document.getElementById('user-name').textContent = name.split(' ')[0];
-  const initials = name.split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase();
+  const initials = name.split(' ').filter(Boolean).map(p => p[0]).join('').substring(0,2).toUpperCase() || '?';
   document.getElementById('user-avatar').textContent = initials;
 }
 
 async function getToken() {
-  const account = msalApp.getActiveAccount();
+  const account = msalInstance.getActiveAccount();
   if (!account) throw new Error('Nicht angemeldet');
-  const result = await msalApp.acquireTokenSilent({ scopes: SCOPES, account });
-  return result.accessToken;
+  try {
+    const result = await msalInstance.acquireTokenSilent({ scopes: SCOPES, account });
+    return result.accessToken;
+  } catch(e) {
+    const result = await msalInstance.acquireTokenPopup({ scopes: SCOPES });
+    return result.accessToken;
+  }
 }
 
 async function graphGet(path) {
@@ -461,17 +249,15 @@ async function loadData() {
 
     const groupsData = await graphGet("/groups?$filter=resourceProvisioningOptions/Any(x:x eq 'Team')&$select=id,displayName&$top=50");
     const groups = groupsData.value || [];
-
     let plans = [];
     for (const g of groups) {
       try {
-        const pd = await graphGet(`/groups/${g.id}/planner/plans`);
+        const pd = await graphGet('/groups/' + g.id + '/planner/plans');
         for (const p of (pd.value || [])) {
           plans.push({ id: p.id, title: p.title, groupId: g.id });
         }
       } catch(e) {}
     }
-
     if (plans.length === 0) {
       try {
         const mp = await graphGet('/me/planner/plans');
@@ -495,7 +281,7 @@ async function loadData() {
 
     for (const p of plans) {
       try {
-        const td = await graphGet(`/planner/plans/${p.id}/tasks`);
+        const td = await graphGet('/planner/plans/' + p.id + '/tasks');
         for (const t of (td.value || [])) {
           let status = 'todo';
           if (t.percentComplete === 100) status = 'done';
@@ -506,26 +292,20 @@ async function loadData() {
           }
           const assignees = Object.keys(t.assignments || {});
           assignees.forEach(uid => userIds.add(uid));
-          tasks.push({
-            id: t.id, title: t.title,
-            planId: p.id, planTitle: p.title,
-            due: t.dueDateTime ? new Date(t.dueDateTime) : null,
-            status, pct: t.percentComplete || 0, assignees
-          });
+          tasks.push({ id: t.id, title: t.title, planId: p.id, planTitle: p.title, due: t.dueDateTime ? new Date(t.dueDateTime) : null, status, assignees });
         }
       } catch(e) {}
     }
 
-    // Resolve user names
-    setStatus('loading', 'Benutzer werden aufgelöst...');
+    allTasks = tasks;
+
+    // Resolve user names via batch
+    setStatus('loading', 'Benutzer werden geladen...');
     const uidArr = [...userIds];
     for (let i = 0; i < uidArr.length; i += 15) {
-      const batch = uidArr.slice(i, i + 15);
+      const batch = uidArr.slice(i, i+15);
       try {
-        const batchReqs = batch.map((id, idx) => ({
-          id: String(idx), method: 'GET',
-          url: `/users/${id}?$select=id,displayName,givenName`
-        }));
+        const batchReqs = batch.map((id, idx) => ({ id: String(idx), method: 'GET', url: '/users/' + id + '?$select=id,displayName,givenName' }));
         const batchRes = await fetch(GRAPH + '/$batch', {
           method: 'POST',
           headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -541,29 +321,20 @@ async function loadData() {
       } catch(e) {}
     }
 
-    allTasks = tasks;
-
-    // Build person filter
     const personSel = document.getElementById('filter-person');
     personSel.innerHTML = '<option value="all">Alle</option>';
     const knownUsers = {};
-    tasks.forEach(t => t.assignees.forEach(uid => {
-      if (!knownUsers[uid]) { knownUsers[uid] = userCache[uid] || uid; }
-    }));
+    tasks.forEach(t => t.assignees.forEach(uid => { if (!knownUsers[uid]) knownUsers[uid] = userCache[uid] || uid; }));
     Object.entries(knownUsers).sort((a,b) => a[1].localeCompare(b[1])).forEach(([uid, name]) => {
-      const o = document.createElement('option');
-      o.value = uid; o.textContent = name;
-      personSel.appendChild(o);
+      const o = document.createElement('option'); o.value = uid; o.textContent = name; personSel.appendChild(o);
     });
 
     const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    setStatus('ok', `Aktualisiert ${time}`);
+    setStatus('ok', 'Aktualisiert ' + time);
     applyFilters();
-
   } catch(err) {
     setStatus('err', 'Fehler');
-    document.getElementById('plan-grid').innerHTML =
-      `<div class="error-box"><strong>Fehler beim Laden:</strong> ${err.message}<br><br>Bitte Seite neu laden und erneut anmelden.</div>`;
+    document.getElementById('plan-grid').innerHTML = '<div class="error-box"><strong>Fehler:</strong> ' + err.message + '</div>';
     console.error(err);
   }
 }
@@ -572,124 +343,88 @@ function applyFilters() {
   const fp = document.getElementById('filter-plan').value;
   const fs = document.getElementById('filter-status').value;
   const fper = document.getElementById('filter-person').value;
-
-  const filtered = allTasks.filter(t =>
-    (fp === 'all' || t.planId === fp) &&
-    (fs === 'all' || t.status === fs) &&
-    (fper === 'all' || t.assignees.includes(fper))
-  );
+  const filtered = allTasks.filter(t => (fp === 'all' || t.planId === fp) && (fs === 'all' || t.status === fs) && (fper === 'all' || t.assignees.includes(fper)));
   const filteredPlans = allPlans.filter(p => fp === 'all' || p.id === fp);
   renderDashboard(filteredPlans, filtered);
 }
 
 function renderDashboard(plans, tasks) {
-  const total = tasks.length;
-  const prog  = tasks.filter(t => t.status === 'progress').length;
-  const late  = tasks.filter(t => t.status === 'late').length;
-  const done  = tasks.filter(t => t.status === 'done').length;
-  const todo  = tasks.filter(t => t.status === 'todo').length;
-
+  const total = tasks.length, prog = tasks.filter(t=>t.status==='progress').length;
+  const late = tasks.filter(t=>t.status==='late').length, done = tasks.filter(t=>t.status==='done').length;
+  const todo = tasks.filter(t=>t.status==='todo').length;
   document.getElementById('m-total').textContent = total;
-  document.getElementById('m-plans-sub').textContent = `über ${plans.length} Pläne`;
+  document.getElementById('m-plans-sub').textContent = 'über ' + plans.length + ' Pläne';
   document.getElementById('m-prog').textContent = prog;
-  document.getElementById('m-prog-sub').textContent = total ? Math.round(prog/total*100) + '%' : '';
+  document.getElementById('m-prog-sub').textContent = total ? Math.round(prog/total*100)+'%' : '';
   document.getElementById('m-late').textContent = late;
-  document.getElementById('m-late-sub').textContent = total ? Math.round(late/total*100) + '%' : '';
+  document.getElementById('m-late-sub').textContent = total ? Math.round(late/total*100)+'%' : '';
   document.getElementById('m-done').textContent = done;
-  document.getElementById('m-done-sub').textContent = total ? Math.round(done/total*100) + '%' : '';
+  document.getElementById('m-done-sub').textContent = total ? Math.round(done/total*100)+'%' : '';
   document.getElementById('m-todo').textContent = todo;
-  document.getElementById('m-todo-sub').textContent = total ? Math.round(todo/total*100) + '%' : '';
+  document.getElementById('m-todo-sub').textContent = total ? Math.round(todo/total*100)+'%' : '';
 
-  // Plan cards
-  if (plans.length === 0) {
-    document.getElementById('plan-grid').innerHTML = '<div class="empty-state">Keine Pläne gefunden.</div>';
-  } else {
-    document.getElementById('plan-grid').innerHTML = plans.map(p => {
-      const pt = tasks.filter(t => t.planId === p.id);
-      const pdone = pt.filter(t => t.status === 'done').length;
-      const plate = pt.filter(t => t.status === 'late').length;
-      const pct = pt.length ? Math.round(pdone / pt.length * 100) : 0;
+  document.getElementById('plan-grid').innerHTML = plans.length === 0 ? '<div class="empty-state">Keine Pläne gefunden.</div>' :
+    plans.map(p => {
+      const pt = tasks.filter(t=>t.planId===p.id);
+      const pdone = pt.filter(t=>t.status==='done').length, plate = pt.filter(t=>t.status==='late').length;
+      const pct = pt.length ? Math.round(pdone/pt.length*100) : 0;
       const rag = plate > 2 ? 'red' : plate > 0 ? 'amber' : pct >= 60 ? 'green' : 'amber';
-      const ragLabel = { green: 'Im Plan', amber: 'Verzögerung', red: 'Kritisch' }[rag];
-      return `<div class="plan-card">
-        <div class="plan-card-name" title="${p.title}">${p.title}</div>
-        <div class="rag-row"><span class="rag-dot rag-${rag}"></span>${ragLabel}</div>
-        <div class="prog-bg"><div class="prog-fill prog-${rag}" style="width:${pct}%"></div></div>
-        <div class="plan-meta"><span>${pct}% fertig</span><span>${plate > 0 ? plate + ' überfällig' : (pt.length - pdone) + ' offen'}</span></div>
-      </div>`;
+      const ragLabel = {green:'Im Plan', amber:'Verzögerung', red:'Kritisch'}[rag];
+      return '<div class="plan-card"><div class="plan-card-name" title="'+p.title+'">'+p.title+'</div><div class="rag-row"><span class="rag-dot rag-'+rag+'"></span>'+ragLabel+'</div><div class="prog-bg"><div class="prog-fill prog-'+rag+'" style="width:'+pct+'%"></div></div><div class="plan-meta"><span>'+pct+'% fertig</span><span>'+(plate>0?plate+' überfällig':(pt.length-pdone)+' offen')+'</span></div></div>';
     }).join('');
-  }
 
-  // Tasks table
-  const statusLabels = { todo: 'Nicht begonnen', progress: 'In Bearbeitung', done: 'Abgeschlossen', late: 'Überfällig' };
-  if (tasks.length === 0) {
-    document.getElementById('tasks-body').innerHTML = '<tr><td colspan="5"><div class="empty-state">Keine Aufgaben gefunden.</div></td></tr>';
-  } else {
-    document.getElementById('tasks-body').innerHTML = tasks.slice(0, 200).map(t => {
-      const dueStr = t.due ? t.due.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '–';
-      const dueColor = t.status === 'late' ? `color:${getComputedStyle(document.documentElement).getPropertyValue('--red')||'#b02020'}` : '';
-      const names = t.assignees.map(uid => userCache[uid] || '–').join(', ') || '–';
-      return `<tr>
-        <td title="${t.title}">${t.title}</td>
-        <td title="${t.planTitle}" style="color:var(--text2)">${t.planTitle}</td>
-        <td title="${names}">${names}</td>
-        <td style="${dueColor}">${dueStr}</td>
-        <td><span class="badge badge-${t.status}">${statusLabels[t.status]}</span></td>
-      </tr>`;
+  const statusLabels = {todo:'Nicht begonnen', progress:'In Bearbeitung', done:'Abgeschlossen', late:'Überfällig'};
+  document.getElementById('tasks-body').innerHTML = tasks.length === 0 ? '<tr><td colspan="5"><div class="empty-state">Keine Aufgaben.</div></td></tr>' :
+    tasks.slice(0,200).map(t => {
+      const dueStr = t.due ? t.due.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '–';
+      const names = t.assignees.map(uid => userCache[uid]||'–').join(', ') || '–';
+      const dueStyle = t.status==='late' ? 'color:var(--red)' : 'color:var(--text2)';
+      return '<tr><td title="'+t.title+'">'+t.title+'</td><td style="color:var(--text2)" title="'+t.planTitle+'">'+t.planTitle+'</td><td>'+names+'</td><td style="font-size:12px;'+dueStyle+'">'+dueStr+'</td><td><span class="badge badge-'+t.status+'">'+statusLabels[t.status]+'</span></td></tr>';
     }).join('');
-  }
 
-  // People
   const personMap = {};
-  tasks.filter(t => t.status !== 'done').forEach(t => {
-    t.assignees.forEach(uid => {
-      if (!personMap[uid]) personMap[uid] = { name: userCache[uid] || uid.substring(0,8), count: 0, late: 0 };
-      personMap[uid].count++;
-      if (t.status === 'late') personMap[uid].late++;
-    });
-  });
-  const entries = Object.entries(personMap).sort((a,b) => b[1].count - a[1].count);
+  tasks.filter(t=>t.status!=='done').forEach(t => t.assignees.forEach(uid => {
+    if (!personMap[uid]) personMap[uid] = {name: userCache[uid]||uid, count:0, late:0};
+    personMap[uid].count++;
+    if (t.status==='late') personMap[uid].late++;
+  }));
+  const entries = Object.entries(personMap).sort((a,b)=>b[1].count-a[1].count);
   const maxCount = entries.length ? entries[0][1].count : 1;
-
-  if (entries.length === 0) {
-    document.getElementById('people-list').innerHTML = '<div class="empty-state">Keine Zuweisungen gefunden.</div>';
-  } else {
-    document.getElementById('people-list').innerHTML = entries.map(([uid, p]) => {
-      const pct = Math.round(p.count / maxCount * 100);
-      const cls = p.late > 0 ? 'load-over' : pct >= 70 ? 'load-warn' : 'load-ok';
-      const barColor = p.late > 0 ? 'var(--red)' : pct >= 70 ? '#e07b00' : 'var(--green)';
-      const initials = p.name.split(' ').map(x=>x[0]).join('').substring(0,2).toUpperCase();
-      return `<div class="person-row">
-        <div class="p-avatar">${initials}</div>
-        <div style="min-width:130px">
-          <div class="p-name">${p.name}</div>
-          <div class="p-sub">${p.count} offen${p.late > 0 ? ` · ${p.late} überfällig` : ''}</div>
-        </div>
-        <div class="p-bar-bg"><div class="p-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
-        <div class="p-count">${p.count}</div>
-      </div>`;
+  document.getElementById('people-list').innerHTML = entries.length === 0 ? '<div class="empty-state">Keine Zuweisungen.</div>' :
+    entries.map(([uid,p]) => {
+      const pct = Math.round(p.count/maxCount*100);
+      const barColor = p.late>0 ? 'var(--red)' : pct>=70 ? '#e07b00' : 'var(--green)';
+      const initials = p.name.split(' ').filter(Boolean).map(x=>x[0]).join('').substring(0,2).toUpperCase();
+      return '<div class="person-row"><div class="p-avatar">'+initials+'</div><div style="min-width:130px"><div class="p-name">'+p.name+'</div><div class="p-sub">'+p.count+' offen'+(p.late>0?' · '+p.late+' überfällig':'')+'</div></div><div class="p-bar-bg"><div class="p-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div><div class="p-count">'+p.count+'</div></div>';
     }).join('');
-  }
 }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', ['plans','tasks','people'][i] === name);
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    const name = t.dataset.tab;
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab===name));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
   });
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-}
+});
 
-// Auto-login if session exists
-(async () => {
-  await msalApp.initialize();
-  const accounts = msalApp.getAllAccounts();
+document.getElementById('filter-plan').addEventListener('change', applyFilters);
+document.getElementById('filter-status').addEventListener('change', applyFilters);
+document.getElementById('filter-person').addEventListener('change', applyFilters);
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+
+// Start
+initMsal().then(() => {
+  document.getElementById('loginBtn').addEventListener('click', signIn);
+  const accounts = msalInstance.getAllAccounts();
   if (accounts.length > 0) {
-    msalApp.setActiveAccount(accounts[0]);
+    msalInstance.setActiveAccount(accounts[0]);
     showApp(accounts[0]);
-    await loadData();
+    loadData();
   }
-})();
+}).catch(e => {
+  alert('Initialisierungsfehler: ' + e.message);
+});
 </script>
 </body>
 </html>
