@@ -406,7 +406,7 @@ const msalConfig = {
   cache: { cacheLocation: 'sessionStorage' }
 };
 
-const msal = new msal.PublicClientApplication(msalConfig);
+const msalApp = new msal.PublicClientApplication(msalConfig);
 let token = null;
 let allTasks = [];
 let allPlans = [];
@@ -414,8 +414,8 @@ let userCache = {};
 
 async function signIn() {
   try {
-    const result = await msal.loginPopup({ scopes: SCOPES });
-    msal.setActiveAccount(result.account);
+    const result = await msalApp.loginPopup({ scopes: SCOPES });
+    msalApp.setActiveAccount(result.account);
     showApp(result.account);
     await loadData();
   } catch(e) {
@@ -433,9 +433,9 @@ function showApp(account) {
 }
 
 async function getToken() {
-  const account = msal.getActiveAccount();
+  const account = msalApp.getActiveAccount();
   if (!account) throw new Error('Nicht angemeldet');
-  const result = await msal.acquireTokenSilent({ scopes: SCOPES, account });
+  const result = await msalApp.acquireTokenSilent({ scopes: SCOPES, account });
   return result.accessToken;
 }
 
@@ -682,10 +682,10 @@ function switchTab(name) {
 
 // Auto-login if session exists
 (async () => {
-  await msal.initialize();
-  const accounts = msal.getAllAccounts();
+  await msalApp.initialize();
+  const accounts = msalApp.getAllAccounts();
   if (accounts.length > 0) {
-    msal.setActiveAccount(accounts[0]);
+    msalApp.setActiveAccount(accounts[0]);
     showApp(accounts[0]);
     await loadData();
   }
