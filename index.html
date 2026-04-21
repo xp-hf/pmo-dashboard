@@ -244,23 +244,36 @@ async function loadData() {
     token = await getToken();
     setStatus('loading', 'Pläne werden geladen...');
 
-    const groupsData = await graphGet("/groups?$filter=resourceProvisioningOptions/Any(x:x eq 'Team')&$select=id,displayName&$top=50");
-    const groups = groupsData.value || [];
+    // Fetch all groups the user is member of (includes private Teams)
+    let groups = [];
+    let nextPath = '/me/memberOf/microsoft.graph.group?$select=id,displayName&$top=50';
+    while (nextPath) {
+      const gd = await graphGet(nextPath);
+      groups = groups.concat(gd.value || []);
+      nextPath = gd['@odata.nextLink'] ? gd['@odata.nextLink'].replace(GRAPH, '') : null;
+    }
+
     let plans = [];
     for (const g of groups) {
       try {
         const pd = await graphGet('/groups/' + g.id + '/planner/plans');
         for (const p of (pd.value || [])) {
-          plans.push({ id: p.id, title: p.title, groupId: g.id });
+          if (!plans.find(x => x.id === p.id)) {
+            plans.push({ id: p.id, title: p.title, groupId: g.id });
+          }
         }
       } catch(e) {}
     }
-    if (plans.length === 0) {
-      try {
-        const mp = await graphGet('/me/planner/plans');
-        plans = (mp.value || []).map(p => ({ id: p.id, title: p.title }));
-      } catch(e) {}
-    }
+
+    // Also get plans directly assigned to the user
+    try {
+      const mp = await graphGet('/me/planner/plans');
+      for (const p of (mp.value || [])) {
+        if (!plans.find(x => x.id === p.id)) {
+          plans.push({ id: p.id, title: p.title });
+        }
+      }
+    } catch(e) {}
 
     allPlans = plans;
     const planSel = document.getElementById('filter-plan');
